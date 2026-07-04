@@ -1,12 +1,19 @@
 import { getStore } from "@netlify/blobs";
 
 export default async (req, context) => {
-  // On crée ou récupère le stockage nommé "liste-courses"
-  const store = getStore("liste-courses");
+  // Correction ici : on configure correctement le stockage avec un objet
+  const store = getStore({ name: "liste-courses" });
   
-  // On récupère la liste actuelle (vide par défaut si elle n'existe pas)
-  const rawData = await store.get("items");
-  let items = rawData ? JSON.parse(rawData) : [];
+  // On récupère proprement la liste existante
+  let items = [];
+  try {
+    const rawData = await store.get("items");
+    if (rawData) {
+      items = JSON.parse(rawData);
+    }
+  } catch (e) {
+    items = [];
+  }
 
   const url = new URL(req.url);
   const method = req.method;
@@ -21,8 +28,8 @@ export default async (req, context) => {
     try {
       const body = await req.json();
       if (body && body.item) {
-        items.push(body.item);
-        await store.set("items", JSON.stringify(items));
+        items.push(body.item); // On ajoute le nouvel article à la liste existante
+        await store.set("items", JSON.stringify(items)); // On sauvegarde l'ensemble
       }
       return Response.json({ items });
     } catch (err) {
@@ -35,13 +42,11 @@ export default async (req, context) => {
     const indexParam = url.searchParams.get("index");
     
     if (indexParam !== null) {
-      // Si un index est fourni, on supprime l'article en question
       const index = parseInt(indexParam, 10);
       if (!isNaN(index) && index >= 0 && index < items.length) {
         items.splice(index, 1);
       }
     } else {
-      // Si pas d'index, on vide complètement la liste
       items = [];
     }
     
