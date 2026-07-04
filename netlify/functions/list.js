@@ -1,10 +1,9 @@
 import { getStore } from "@netlify/blobs";
 
 export default async (req, context) => {
-  // Correction ici : on configure correctement le stockage avec un objet
-  const store = getStore({ name: "liste-courses" });
+  // AJOUT ICI : On force la cohérence forte ("strong") pour bloquer les données et éviter les pertes
+  const store = getStore({ name: "liste-courses", consistency: "strong" });
   
-  // On récupère proprement la liste existante
   let items = [];
   try {
     const rawData = await store.get("items");
@@ -28,8 +27,8 @@ export default async (req, context) => {
     try {
       const body = await req.json();
       if (body && body.item) {
-        items.push(body.item); // On ajoute le nouvel article à la liste existante
-        await store.set("items", JSON.stringify(items)); // On sauvegarde l'ensemble
+        items.push(body.item);
+        await store.set("items", JSON.stringify(items));
       }
       return Response.json({ items });
     } catch (err) {
