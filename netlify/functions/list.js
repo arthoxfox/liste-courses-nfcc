@@ -1,12 +1,13 @@
 import { getStore } from "@netlify/blobs";
 
 export default async (req, context) => {
-  // AJOUT ICI : On force la cohérence forte ("strong") pour bloquer les données et éviter les pertes
-  const store = getStore({ name: "liste-courses", consistency: "strong" });
+  // On configure le stockage normalement
+  const store = getStore({ name: "liste-courses" });
   
   let items = [];
   try {
-    const rawData = await store.get("items");
+    // CORRECTION ICI : Le "consistency: strong" est déplacé à l'intérieur du .get()
+    const rawData = await store.get("items", { consistency: "strong" });
     if (rawData) {
       items = JSON.parse(rawData);
     }
