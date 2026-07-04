@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<title>Liste de courses</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #E9ECEF;
+    --card: #FFFFFF;
+    --ink: #20242A;
+    --ink-soft: #6B7280;
+    --stamp: #C1442D;
+    --stamp-dark: #9C3520;
+    --line: #DADEE3;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    min-height: 100%;
+    background-color: var(--paper);
+    background-image: radial-gradient(circle at 1px 1px, rgba(0,0,0,0.05) 1px, transparent 0);
+    background-size: 18px 18px;
+    color: var(--ink);
+    font-family: 'Work Sans', sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  body {
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 24px;
+  }
+  .card {
+    position: relative;
+    width: 100%;
+    max-width: 420px;
+    margin-top: 24px;
+    background: var(--card);
+    border-radius: 4px;
+    box-shadow: 0 1px 2px rgba(20,24,30,0.06), 0 10px 28px rgba(20,24,30,0.10);
+    padding: 40px 28px 32px;
+  }
+  .card::before {
+    content: '';
+    position: absolute;
+    top: -1px;
+    left: 0;
+    right: 0;
+    height: 16px;
+    border-radius: 4px 4px 0 0;
+    background-image: radial-gradient(circle 7px, var(--paper) 7px, transparent 7.5px);
+    background-size: 24px 16px;
+    background-position: 12px -8px;
+    background-repeat: repeat-x;
+  }
+  .eyebrow {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    margin-bottom: 8px;
+  }
+  .title {
+    font-family: 'Space Mono', monospace;
+    font-weight: 700;
+    font-size: 22px;
+    margin: 0 0 20px;
+  }
+  .list {
+    list-style: none;
+    margin: 0 0 8px;
+    padding: 0;
+    border-top: 1px solid var(--line);
+  }
+  .item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 11px 0;
+    border-bottom: 1px solid var(--line);
+    font-size: 15px;
+    line-height: 1.4;
+    animation: fadeIn 0.2s ease;
+  }
+  .item span { word-break: break-word; }
+  .del {
+    flex-shrink: 0;
+    width: 26px;
+    height: 26px;
+    border: none;
+    background: transparent;
+    color: var(--ink-soft);
+    font-size: 18px;
+    line-height: 1;
+    cursor: pointer;
+    border-radius: 4px;
+  }
+  .del:hover { color: var(--stamp); background: rgba(193,68,45,0.08); }
+  .empty {
+    color: var(--ink-soft);
+    font-size: 14px;
+    padding: 16px 0;
+    margin: 0;
+    text-align: center;
+    border-top: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+  }
+  .add-form {
+    display: flex;
+    gap: 8px;
+    margin-top: 16px;
+  }
+  .add-form input {
+    flex: 1;
+    min-width: 0;
+    border: 1.5px solid var(--line);
+    border-radius: 6px;
+    padding: 12px;
+    font-family: 'Work Sans', sans-serif;
+    font-size: 16px;
+    color: var(--ink);
+    background: #FCFCFD;
+  }
+  .add-form input:focus {
+    outline: none;
+    border-color: var(--stamp);
+  }
+  .add-form button {
+    border: none;
+    border-radius: 6px;
+    padding: 0 18px;
+    background: var(--ink);
+    color: #fff;
+    font-family: 'Space Mono', monospace;
+    font-weight: 700;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    cursor: pointer;
+  }
+  .add-form button:hover { background: #0f1216; }
+  .divider {
+    height: 1px;
+    background: var(--line);
+    margin: 28px 0 20px;
+  }
+  .copy-btn {
+    width: 100%;
+    border: none;
+    border-radius: 6px;
+    padding: 15px;
+    background: var(--stamp);
+    color: #fff;
+    font-family: 'Space Mono', monospace;
+    font-weight: 700;
+    font-size: 14px;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background 0.15s ease, transform 0.1s ease;
+  }
+  .copy-btn:active { transform: scale(0.98); }
+  .copy-btn:hover { background: var(--stamp-dark); }
+  .hint {
+    margin-top: 12px;
+    font-size: 13px;
+    color: var(--ink-soft);
+    text-align: center;
+    min-height: 18px;
+  }
+  .fallback {
+    width: 100%;
+    margin-top: 12px;
+    min-height: 90px;
+    border: 1.5px solid var(--line);
+    border-radius: 6px;
+    padding: 10px;
+    font-family: 'Work Sans', sans-serif;
+    font-size: 14px;
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .copy-btn, .item { transition: none; animation: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="card">
+    <div class="eyebrow">🛒 Patch NFC</div>
+    <h1 class="title">Liste de courses</h1>
+
+    <ul class="list" id="list"></ul>
+    <p class="empty" id="empty" style="display:none;">Liste vide pour l'instant.</p>
+
+    <form class="add-form" id="addForm">
+      <input id="itemInput" type="text" placeholder="Ajouter un article…" autofocus autocomplete="off">
+      <button type="submit">Ajouter</button>
+    </form>
+
+    <div class="divider"></div>
+
+    <button class="copy-btn" id="copyBtn">📋 Copier &amp; vider la liste</button>
+    <div class="hint" id="hint"></div>
+  </div>
+
+<script>
+  const API = '/.netlify/functions/list';
+  const listEl = document.getElementById('list');
+  const emptyEl = document.getElementById('empty');
+  const form = document.getElementById('addForm');
+  const input = document.getElementById('itemInput');
+  const copyBtn = document.getElementById('copyBtn');
+  const hint = document.getElementById('hint');
+
+  function render(items) {
+    listEl.innerHTML = '';
+    emptyEl.style.display = items.length === 0 ? 'block' : 'none';
+    items.forEach((item, i) => {
+      const li = document.createElement('li');
+      li.className = 'item';
+
+      const span = document.createElement('span');
+      span.textContent = item;
+
+      const del = document.createElement('button');
+      del.className = 'del';
+      del.textContent = '×';
+      del.setAttribute('aria-label', 'Supprimer cet article');
+      del.addEventListener('click', () => removeItem(i));
+
+      li.appendChild(span);
+      li.appendChild(del);
+      listEl.appendChild(li);
+    });
+  }
+
+  async function loadList() {
+    try {
+      const res = await fetch(API);
+      const data = await res.json();
+      render(data.items || []);
+    } catch (err) {
+      hint.textContent = 'Impossible de charger la liste.';
+    }
+  }
+
+  async function addItem(text) {
+    const res = await fetch(API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ item: text }),
+    });
+    const data = await res.json();
+    render(data.items || []);
+  }
+
+  async function removeItem(index) {
+    const res = await fetch(`${API}?index=${index}`, { method: 'DELETE' });
+    const data = await res.json();
+    render(data.items || []);
+  }
+
+  async function copyAndClear() {
+    hint.textContent = '';
+    const existingFallback = document.querySelector('.fallback');
+    if (existingFallback) existingFallback.remove();
+
+    const res = await fetch(API);
+    const data = await res.json();
+    const items = data.items || [];
+
+    if (items.length === 0) {
+      hint.textContent = 'Rien à copier, la liste est vide.';
+      return;
+    }
+
+    const text = items.map((item) => `- ${item}`).join('\n');
+
+    try {
+      await navigator.clipboard.writeText(text);
+      hint.textContent = 'Copié ✓ — colle-la dans tes notes.';
+    } catch (err) {
+      hint.textContent = "Copie auto impossible, sélectionne le texte ci-dessous :";
+      const ta = document.createElement('textarea');
+      ta.className = 'fallback';
+      ta.value = text;
+      copyBtn.insertAdjacentElement('afterend', ta);
+      ta.focus();
+      ta.select();
+    }
+
+    await fetch(API, { method: 'DELETE' });
+    render([]);
+  }
+
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const text = input.value.trim();
+    if (!text) return;
+    input.value = '';
+    addItem(text);
+  });
+
+  copyBtn.addEventListener('click', copyAndClear);
+
+  loadList();
+</script>
+</body>
+</html>

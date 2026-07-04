@@ -1,0 +1,9 @@
+{
+  "name": "liste-courses-nfc",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Patch NFC -> ajoute un article a la liste de courses -> bouton copie + vide la liste",
+  "dependencies": {
+    "@netlify/blobs": "^8.1.0"
+  }
+}
