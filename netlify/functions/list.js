@@ -1,53 +1,53 @@
-const { getStore } = require('@netlify/blobs');
+import { getStore } from "@netlify/blobs";
 
-exports.handler = async (event) => {
-  const store = getStore({ name: 'courses', consistency: 'strong' });
+export default async (req, context) => {
+  // On crée ou récupère le stockage nommé "liste-courses"
+  const store = getStore("liste-courses");
+  
+  // On récupère la liste actuelle (vide par défaut si elle n'existe pas)
+  const rawData = await store.get("items");
+  let items = rawData ? JSON.parse(rawData) : [];
 
-  try {
-    // Récupérer la liste actuelle
-    if (event.httpMethod === 'GET') {
-      const items = (await store.get('list', { type: 'json' })) || [];
-      return json(200, { items });
-    }
+  const url = new URL(req.url);
+  const method = req.method;
 
-    // Ajouter un article
-    if (event.httpMethod === 'POST') {
-      const { item } = JSON.parse(event.body || '{}');
-      if (!item || !item.trim()) {
-        return json(400, { error: 'Article vide' });
-      }
-      const items = (await store.get('list', { type: 'json' })) || [];
-      items.push(item.trim());
-      await store.setJSON('list', items);
-      return json(200, { items });
-    }
-
-    // Supprimer un article précis (?index=N) ou vider toute la liste (sans paramètre)
-    if (event.httpMethod === 'DELETE') {
-      const indexParam = event.queryStringParameters?.index;
-
-      if (indexParam !== undefined) {
-        const items = (await store.get('list', { type: 'json' })) || [];
-        const i = parseInt(indexParam, 10);
-        if (!Number.isNaN(i)) items.splice(i, 1);
-        await store.setJSON('list', items);
-        return json(200, { items });
-      }
-
-      await store.setJSON('list', []);
-      return json(200, { items: [] });
-    }
-
-    return { statusCode: 405, body: 'Method not allowed' };
-  } catch (err) {
-    return json(500, { error: err.message });
+  // 1. Charger la liste (GET)
+  if (method === "GET") {
+    return Response.json({ items });
   }
-};
 
-function json(statusCode, body) {
-  return {
-    statusCode,
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  };
-}
+  // 2. Ajouter un article (POST)
+  if (method === "POST") {
+    try {
+      const body = await req.json();
+      if (body && body.item) {
+        items.push(body.item);
+        await store.set("items", JSON.stringify(items));
+      }
+      return Response.json({ items });
+    } catch (err) {
+      return new Response("JSON invalide", { status: 400 });
+    }
+  }
+
+  // 3. Supprimer un article ou vider la liste (DELETE)
+  if (method === "DELETE") {
+    const indexParam = url.searchParams.get("index");
+    
+    if (indexParam !== null) {
+      // Si un index est fourni, on supprime l'article en question
+      const index = parseInt(indexParam, 10);
+      if (!isNaN(index) && index >= 0 && index < items.length) {
+        items.splice(index, 1);
+      }
+    } else {
+      // Si pas d'index, on vide complètement la liste
+      items = [];
+    }
+    
+    await store.set("items", JSON.stringify(items));
+    return Response.json({ items });
+  }
+
+  return new Response("Méthode non autorisée", { status: 405 });
+};
