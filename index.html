@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
-<title>Liste de courses</title>
+<title>Listes de courses</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
@@ -37,12 +37,12 @@
   .card {
     position: relative;
     width: 100%;
-    max-width: 420px;
+    max-width: 440px;
     margin-top: 24px;
     background: var(--card);
     border-radius: 4px;
     box-shadow: 0 1px 2px rgba(20,24,30,0.06), 0 10px 28px rgba(20,24,30,0.10);
-    padding: 40px 28px 32px;
+    padding: 40px 24px 32px;
   }
   .card::before {
     content: '';
@@ -64,12 +64,48 @@
     text-transform: uppercase;
     color: var(--ink-soft);
     margin-bottom: 8px;
+    padding: 0 4px;
   }
   .title {
     font-family: 'Space Mono', monospace;
     font-weight: 700;
     font-size: 22px;
-    margin: 0 0 20px;
+    margin: 0 0 18px;
+    padding: 0 4px;
+  }
+  .tabs {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    padding: 2px 4px 10px;
+    margin-bottom: 12px;
+    -webkit-overflow-scrolling: touch;
+  }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab {
+    flex-shrink: 0;
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    padding: 8px 14px;
+    border-radius: 999px;
+    border: 1.5px solid var(--line);
+    background: #fff;
+    color: var(--ink-soft);
+    cursor: pointer;
+  }
+  .tab.active {
+    background: var(--ink);
+    border-color: var(--ink);
+    color: #fff;
+  }
+  .reorder-hint {
+    font-size: 12px;
+    color: var(--ink-soft);
+    padding: 0 4px;
+    margin: 0 0 6px;
   }
   .list {
     list-style: none;
@@ -80,15 +116,39 @@
   .item {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-    padding: 11px 0;
+    gap: 8px;
+    padding: 9px 0;
     border-bottom: 1px solid var(--line);
     font-size: 15px;
     line-height: 1.4;
-    animation: fadeIn 0.2s ease;
+    background: var(--card);
   }
-  .item span { word-break: break-word; }
+  .item.dragging {
+    opacity: 0.45;
+    background: #f2f2f3;
+  }
+  .handle {
+    flex-shrink: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--ink-soft);
+    font-size: 17px;
+    cursor: grab;
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+    border-radius: 4px;
+  }
+  .handle:active { cursor: grabbing; background: rgba(0,0,0,0.05); }
+  .item .text {
+    flex: 1;
+    min-width: 0;
+    word-break: break-word;
+  }
   .del {
     flex-shrink: 0;
     width: 26px;
@@ -105,7 +165,7 @@
   .empty {
     color: var(--ink-soft);
     font-size: 14px;
-    padding: 16px 0;
+    padding: 16px 4px;
     margin: 0;
     text-align: center;
     border-top: 1px solid var(--line);
@@ -115,6 +175,7 @@
     display: flex;
     gap: 8px;
     margin-top: 16px;
+    padding: 0 4px;
   }
   .add-form input {
     flex: 1;
@@ -127,10 +188,7 @@
     color: var(--ink);
     background: #FCFCFD;
   }
-  .add-form input:focus {
-    outline: none;
-    border-color: var(--stamp);
-  }
+  .add-form input:focus { outline: none; border-color: var(--stamp); }
   .add-form button {
     border: none;
     border-radius: 6px;
@@ -148,10 +206,12 @@
   .divider {
     height: 1px;
     background: var(--line);
-    margin: 28px 0 20px;
+    margin: 24px 4px 18px;
   }
   .copy-btn {
-    width: 100%;
+    width: calc(100% - 8px);
+    margin: 0 4px;
+    display: block;
     border: none;
     border-radius: 6px;
     padding: 15px;
@@ -169,14 +229,16 @@
   .copy-btn:hover { background: var(--stamp-dark); }
   .hint {
     margin-top: 12px;
+    padding: 0 4px;
     font-size: 13px;
     color: var(--ink-soft);
     text-align: center;
     min-height: 18px;
   }
   .fallback {
-    width: 100%;
-    margin-top: 12px;
+    width: calc(100% - 8px);
+    margin: 12px 4px 0;
+    display: block;
     min-height: 90px;
     border: 1.5px solid var(--line);
     border-radius: 6px;
@@ -184,36 +246,48 @@
     font-family: 'Work Sans', sans-serif;
     font-size: 14px;
   }
-  @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(-4px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
   @media (prefers-reduced-motion: reduce) {
-    .copy-btn, .item { transition: none; animation: none; }
+    .copy-btn { transition: none; }
   }
 </style>
 </head>
 <body>
   <div class="card">
     <div class="eyebrow">🛒 Patch NFC</div>
-    <h1 class="title">Liste de courses</h1>
+    <h1 class="title">Listes de courses</h1>
+
+    <div class="tabs" id="tabs"></div>
+    <p class="reorder-hint">Maintiens ⠿ enfoncé pour réordonner un article.</p>
 
     <ul class="list" id="list"></ul>
     <p class="empty" id="empty" style="display:none;">Liste vide pour l'instant.</p>
 
     <form class="add-form" id="addForm">
-      <input id="itemInput" type="text" placeholder="Ajouter un article…" autofocus autocomplete="off">
+      <input id="itemInput" type="text" placeholder="Ajouter un article…" autocomplete="off">
       <button type="submit">Ajouter</button>
     </form>
 
     <div class="divider"></div>
 
-    <button class="copy-btn" id="copyBtn">📋 Copier &amp; vider la liste</button>
+    <button class="copy-btn" id="copyBtn">📋 Copier &amp; vider cette liste</button>
     <div class="hint" id="hint"></div>
   </div>
 
 <script>
+  const STORES = [
+    { id: 'lidl', label: 'Lidl' },
+    { id: 'costco', label: 'Costco' },
+    { id: 'grand-frais', label: 'Grand Frais' },
+    { id: 'carrefour', label: 'Carrefour' },
+  ];
+
   const API = '/.netlify/functions/list';
+
+  const params = new URLSearchParams(window.location.search);
+  const requested = params.get('store');
+  let currentStore = STORES.some((s) => s.id === requested) ? requested : STORES[0].id;
+
+  const tabsEl = document.getElementById('tabs');
   const listEl = document.getElementById('list');
   const emptyEl = document.getElementById('empty');
   const form = document.getElementById('addForm');
@@ -221,22 +295,50 @@
   const copyBtn = document.getElementById('copyBtn');
   const hint = document.getElementById('hint');
 
+  function renderTabs() {
+    tabsEl.innerHTML = '';
+    STORES.forEach((s) => {
+      const btn = document.createElement('button');
+      btn.className = 'tab' + (s.id === currentStore ? ' active' : '');
+      btn.textContent = s.label;
+      btn.addEventListener('click', () => {
+        if (s.id === currentStore) return;
+        currentStore = s.id;
+        renderTabs();
+        hint.textContent = '';
+        const fb = document.querySelector('.fallback');
+        if (fb) fb.remove();
+        loadList();
+      });
+      tabsEl.appendChild(btn);
+    });
+  }
+
   function render(items) {
     listEl.innerHTML = '';
     emptyEl.style.display = items.length === 0 ? 'block' : 'none';
     items.forEach((item, i) => {
       const li = document.createElement('li');
       li.className = 'item';
+      li.dataset.text = item;
+
+      const handle = document.createElement('span');
+      handle.className = 'handle';
+      handle.textContent = '⠿';
+      handle.addEventListener('pointerdown', (e) => startDrag(e, li));
 
       const span = document.createElement('span');
+      span.className = 'text';
       span.textContent = item;
 
       const del = document.createElement('button');
       del.className = 'del';
+      del.type = 'button';
       del.textContent = '×';
       del.setAttribute('aria-label', 'Supprimer cet article');
       del.addEventListener('click', () => removeItem(i));
 
+      li.appendChild(handle);
       li.appendChild(span);
       li.appendChild(del);
       listEl.appendChild(li);
@@ -245,7 +347,7 @@
 
   async function loadList() {
     try {
-      const res = await fetch(API);
+      const res = await fetch(`${API}?store=${currentStore}`);
       const data = await res.json();
       render(data.items || []);
     } catch (err) {
@@ -254,7 +356,7 @@
   }
 
   async function addItem(text) {
-    const res = await fetch(API, {
+    const res = await fetch(`${API}?store=${currentStore}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ item: text }),
@@ -264,9 +366,59 @@
   }
 
   async function removeItem(index) {
-    const res = await fetch(`${API}?index=${index}`, { method: 'DELETE' });
+    const res = await fetch(`${API}?store=${currentStore}&index=${index}`, { method: 'DELETE' });
     const data = await res.json();
     render(data.items || []);
+  }
+
+  async function persistOrder(items) {
+    try {
+      await fetch(`${API}?store=${currentStore}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ items }),
+      });
+    } catch (err) {
+      hint.textContent = "L'ordre n'a pas pu être sauvegardé.";
+    }
+  }
+
+  function startDrag(e, li) {
+    e.preventDefault();
+    const handle = e.currentTarget;
+    const pointerId = e.pointerId;
+    handle.setPointerCapture(pointerId);
+    li.classList.add('dragging');
+
+    function onMove(ev) {
+      if (ev.pointerId !== pointerId) return;
+      const currentY = ev.clientY;
+      const siblings = Array.from(listEl.querySelectorAll('.item:not(.dragging)'));
+      const after = siblings.find((sib) => {
+        const box = sib.getBoundingClientRect();
+        return currentY < box.top + box.height / 2;
+      });
+      if (after) {
+        listEl.insertBefore(li, after);
+      } else {
+        listEl.appendChild(li);
+      }
+    }
+
+    function onUp(ev) {
+      if (ev.pointerId !== pointerId) return;
+      li.classList.remove('dragging');
+      try { handle.releasePointerCapture(pointerId); } catch (err) {}
+      document.removeEventListener('pointermove', onMove);
+      document.removeEventListener('pointerup', onUp);
+
+      const newItems = Array.from(listEl.querySelectorAll('.item')).map((el) => el.dataset.text);
+      render(newItems);
+      persistOrder(newItems);
+    }
+
+    document.addEventListener('pointermove', onMove);
+    document.addEventListener('pointerup', onUp);
   }
 
   async function copyAndClear() {
@@ -274,7 +426,7 @@
     const existingFallback = document.querySelector('.fallback');
     if (existingFallback) existingFallback.remove();
 
-    const res = await fetch(API);
+    const res = await fetch(`${API}?store=${currentStore}`);
     const data = await res.json();
     const items = data.items || [];
 
@@ -289,7 +441,7 @@
       await navigator.clipboard.writeText(text);
       hint.textContent = 'Copié ✓ — colle-la dans tes notes.';
     } catch (err) {
-      hint.textContent = "Copie auto impossible, sélectionne le texte ci-dessous :";
+      hint.textContent = 'Copie auto impossible, sélectionne le texte ci-dessous :';
       const ta = document.createElement('textarea');
       ta.className = 'fallback';
       ta.value = text;
@@ -298,7 +450,7 @@
       ta.select();
     }
 
-    await fetch(API, { method: 'DELETE' });
+    await fetch(`${API}?store=${currentStore}`, { method: 'DELETE' });
     render([]);
   }
 
@@ -312,6 +464,7 @@
 
   copyBtn.addEventListener('click', copyAndClear);
 
+  renderTabs();
   loadList();
 </script>
 </body>
