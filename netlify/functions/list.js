@@ -1,35 +1,41 @@
 import { getStore } from "@netlify/blobs";
 
+// Les 4 listes indépendantes. Chacune est stockée sous sa propre clé,
+// donc modifier/vider l'une n'a aucun effet sur les autres.
+const STORES = ["lidl", "costco", "grand-frais", "carrefour"];
+
 export default async (req, context) => {
-  // On configure le stockage normalement
-  const store = getStore({ name: "liste-courses" });
-  
+  const url = new URL(req.url);
+  const storeId = url.searchParams.get("store");
+
+  if (!STORES.includes(storeId)) {
+    return new Response("Magasin inconnu", { status: 400 });
+  }
+
+  const blobStore = getStore({ name: "liste-courses" });
+
   let items = [];
   try {
-    // CORRECTION ICI : Le "consistency: strong" est déplacé à l'intérieur du .get()
-    const rawData = await store.get("items", { consistency: "strong" });
-    if (rawData) {
-      items = JSON.parse(rawData);
-    }
+    const raw = await blobStore.get(storeId, { consistency: "strong" });
+    if (raw) items = JSON.parse(raw);
   } catch (e) {
     items = [];
   }
 
-  const url = new URL(req.url);
   const method = req.method;
 
-  // 1. Charger la liste (GET)
+  // Charger la liste de ce magasin
   if (method === "GET") {
     return Response.json({ items });
   }
 
-  // 2. Ajouter un article (POST)
+  // Ajouter un article
   if (method === "POST") {
     try {
       const body = await req.json();
-      if (body && body.item) {
-        items.push(body.item);
-        await store.set("items", JSON.stringify(items));
+      if (body && body.item && body.item.trim()) {
+        items.push(body.item.trim());
+        await blobStore.set(storeId, JSON.stringify(items));
       }
       return Response.json({ items });
     } catch (err) {
@@ -37,10 +43,24 @@ export default async (req, context) => {
     }
   }
 
-  // 3. Supprimer un article ou vider la liste (DELETE)
+  // Enregistrer un nouvel ordre (utilisé après un glisser-déposer)
+  if (method === "PUT") {
+    try {
+      const body = await req.json();
+      if (Array.isArray(body.items)) {
+        items = body.items;
+        await blobStore.set(storeId, JSON.stringify(items));
+      }
+      return Response.json({ items });
+    } catch (err) {
+      return new Response("JSON invalide", { status: 400 });
+    }
+  }
+
+  // Supprimer un article précis (?index=N) ou vider toute la liste (sans paramètre)
   if (method === "DELETE") {
     const indexParam = url.searchParams.get("index");
-    
+
     if (indexParam !== null) {
       const index = parseInt(indexParam, 10);
       if (!isNaN(index) && index >= 0 && index < items.length) {
@@ -49,8 +69,8 @@ export default async (req, context) => {
     } else {
       items = [];
     }
-    
-    await store.set("items", JSON.stringify(items));
+
+    await blobStore.set(storeId, JSON.stringify(items));
     return Response.json({ items });
   }
 
